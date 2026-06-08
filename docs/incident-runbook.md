@@ -155,3 +155,82 @@ After applying the corrected manifest, the Deployment recovered and the applicat
 SRE Lesson
 
 ImagePullBackOff usually points to an image name, tag, registry, authentication, or image pull policy problem. Since the container never starts, kubectl describe pod and Kubernetes events are more useful than application logs. A rollout can be failing while old healthy pods continue serving traffic, so rollout status and events must be checked alongside application health.
+
+
+## Scenario: CrashLoopBackOff
+
+### Goal
+Simulate a container runtime failure where the image is valid, but the application process crashes after startup.
+
+### Symptoms
+- Pod status shows `CrashLoopBackOff`.
+- Container restart count keeps increasing.
+- New pod does not become ready.
+- Existing healthy pods may continue serving traffic during the failed rollout.
+
+### Commands Used
+
+Check pod status:
+
+```
+kubectl get pods -n sre-lab
+
+Describe the failing pod:
+
+```
+kubectl describe pod <pod-name> -n sre-lab
+
+Check current container logs:
+
+```
+kubectl logs <pod-name> -n sre-lab
+
+Check logs from the previous failed container instance:
+
+```
+kubectl logs <pod-name> -n sre-lab --previous
+
+Check namespace events:
+
+```
+kubectl get events -n sre-lab --sort-by=.metadata.creationTimestamp
+
+Test service response:
+
+```
+curl http://127.0.0.1:8080/version
+
+What Happened
+
+The Deployment was intentionally modified to override the container startup command:
+
+command: ["python"]
+args: ["missing_file.py"]
+
+The image sre-fastapi-app:0.2.0 was available locally, so Kubernetes successfully created and started the container. However, the process failed because /app/missing_file.py did not exist.
+
+Evidence
+
+The container logs showed:
+
+python: can't open file '/app/missing_file.py': [Errno 2] No such file or directory
+
+The pod status showed:
+
+CrashLoopBackOff
+
+The events showed:
+
+Back-off restarting failed container sre-fastapi-app
+
+Resolution
+
+The invalid command and args override was removed from k8s/deployment.yaml, allowing the container to use the original Dockerfile command:
+
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+SRE Lesson
+
+CrashLoopBackOff means Kubernetes can start the container, but the process inside it exits repeatedly. Unlike ImagePullBackOff, application logs are useful here because the container actually starts. kubectl logs --previous is especially important when the container restarts quickly.
+
+
