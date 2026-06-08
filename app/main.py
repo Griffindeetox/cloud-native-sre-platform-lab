@@ -9,14 +9,14 @@ app = FastAPI(
     version="0.1.0",
 )
 
-APP_VERSION = os.getenv("APP_VERSION", "0.1.0")
+APP_VERSION = os.getenv("APP_VERSION", "0.2.0")
 ENVIRONMENT = os.getenv("ENVIRONMENT", "local")
 
 
 @app.get("/")
 def root():
     return {
-        "message": "Cloud-Native SRE Platform Lab is running",
+        "message": "Cloud-Native SRE Platform Lab 0.2.0 is running",
         "environment": ENVIRONMENT,
         "version": APP_VERSION,
     }
