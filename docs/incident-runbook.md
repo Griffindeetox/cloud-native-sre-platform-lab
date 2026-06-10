@@ -234,3 +234,84 @@ SRE Lesson
 CrashLoopBackOff means Kubernetes can start the container, but the process inside it exits repeatedly. Unlike ImagePullBackOff, application logs are useful here because the container actually starts. kubectl logs --previous is especially important when the container restarts quickly.
 
 
+## Scenario: Service selector mismatch
+
+### Goal
+Simulate a Kubernetes traffic routing issue where pods are healthy, but the Service cannot route traffic to them.
+
+### Symptoms
+- Pods are running and ready.
+- Deployment is healthy.
+- Service exists.
+- Service has no endpoints.
+- Requests through the Service fail or return no response.
+
+### Commands Used
+
+Check pods:
+
+```
+kubectl get pods -n sre-lab
+
+Check Service:
+
+```
+kubectl get svc -n sre-lab
+
+Check endpoints:
+
+```
+kubectl get endpoints -n sre-lab
+
+Describe the Service:
+
+```
+kubectl describe service sre-fastapi-app -n sre-lab
+
+Check pod labels:
+
+```
+kubectl get pods -n sre-lab --show -labels
+
+Test service response:
+
+```
+curl http://127.0.0.1:8080/version
+
+### What Happened
+
+The Service selector was intentionally changed from:
+
+selector:
+  app: sre-fastapi-app
+
+To:
+
+selector:
+  app: wrong-app-label
+
+The pods were still running and healthy, but the Service could not find matching backend pods. As a result, the Service had no endpoints.
+
+Evidence
+
+The Service selector did not match the pod labels:
+
+Service selector: app=wrong-app-label
+Pod label:        app=sre-fastapi-app
+
+The endpoints output showed no backend pod IPs for the Service.
+
+Resolution
+
+The Service selector was changed back to:
+
+selector:
+  app: sre-fastapi-app
+
+After applying the corrected Service manifest, the endpoints returned and traffic through the Service worked again.
+
+SRE Lesson
+
+Not every outage is caused by unhealthy pods. A Service can be misconfigured even when the Deployment is healthy. For traffic issues, always check Service selectors, pod labels, and endpoints.
+
+
