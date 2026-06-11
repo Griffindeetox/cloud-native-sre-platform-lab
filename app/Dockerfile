@@ -10,8 +10,9 @@ COPY main.py .
 
 EXPOSE 8000
 
-ENV APP_VERSION=0.2.0
+ENV APP_VERSION=0.3.0
 ENV ENVIRONMENT=container
 
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+
 
