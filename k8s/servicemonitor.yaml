@@ -1,0 +1,18 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: sre-fastapi-servicemonitor
+  namespace: sre-lab
+  labels:
+    release: monitoring
+spec:
+  selector:
+    matchLabels:
+      app: sre-fastapi-app
+  namespaceSelector:
+    matchNames:
+      - sre-lab
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 15s
