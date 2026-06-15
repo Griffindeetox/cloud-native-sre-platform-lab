@@ -76,3 +76,45 @@ histogram_quantile(
 SRE Lesson
 
 Dashboards help convert raw metrics into operational visibility. In this lab, Grafana shows request rate, latency, HTTP status codes, pod-level traffic, and restart behavior for the FastAPI service.
+
+## Grafana Dashboard
+
+A Grafana dashboard was created to visualize FastAPI application metrics scraped by Prometheus.
+
+The exported dashboard JSON is stored in this repo as:
+
+```
+observability/grafana-dashboard.json
+
+Dashboard Panels
+Request Rate by Endpoint
+Request Rate by Pod
+Total Requests by Endpoint
+P95 Latency by Endpoint
+HTTP Responses by Status Code
+Pod Restarts
+
+Example PromQL Queries
+
+sum by (exported_endpoint) (
+  rate(sre_lab_http_requests_total[5m])
+)
+
+```
+
+sum by (pod) (
+  rate(sre_lab_http_requests_total[5m])
+)
+
+```
+
+histogram_quantile(
+  0.95,
+  sum by (le, exported_endpoint) (
+    rate(sre_lab_http_request_duration_seconds_bucket[5m])
+  )
+)
+
+SRE Lesson
+
+Dashboards help convert raw metrics into operational visibility. In this lab, Grafana shows request rate, latency, HTTP status codes, pod-level traffic, and restart behavior for the FastAPI service.
