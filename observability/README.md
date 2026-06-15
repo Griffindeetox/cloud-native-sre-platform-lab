@@ -41,3 +41,38 @@ service="sre-fastapi-service"
 
 
 Prometheus renamed the app label endpoint to exported_endpoint because endpoint is already used as a Prometheus target label.
+
+
+## Grafana Dashboard
+
+A Grafana dashboard was created to visualize FastAPI application metrics scraped by Prometheus.
+
+### Dashboard Panels
+
+- Request Rate by Endpoint
+- Request Rate by Pod
+- Total Requests by Endpoint
+- P95 Latency by Endpoint
+- HTTP Responses by Status Code
+- Pod Restarts
+
+### Example PromQL Queries
+
+```promql
+sum by (exported_endpoint) (
+  rate(sre_lab_http_requests_total[5m])
+)
+sum by (pod) (
+  rate(sre_lab_http_requests_total[5m])
+)
+
+histogram_quantile(
+  0.95,
+  sum by (le, exported_endpoint) (
+    rate(sre_lab_http_request_duration_seconds_bucket[5m])
+  )
+)
+
+SRE Lesson
+
+Dashboards help convert raw metrics into operational visibility. In this lab, Grafana shows request rate, latency, HTTP status codes, pod-level traffic, and restart behavior for the FastAPI service.
