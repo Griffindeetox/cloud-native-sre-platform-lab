@@ -118,3 +118,34 @@ histogram_quantile(
 SRE Lesson
 
 Dashboards help convert raw metrics into operational visibility. In this lab, Grafana shows request rate, latency, HTTP status codes, pod-level traffic, and restart behavior for the FastAPI service.
+
+
+## Prometheus Alerting
+
+Prometheus alert rules are defined in:
+
+```
+k8s/prometheus-rules.yaml
+
+Alerts Added
+FastAPIHigh404Rate
+
+Triggers when the FastAPI service returns 404 responses above the configured threshold.
+
+Example expression:
+
+sum(rate(sre_lab_http_requests_total{namespace="sre-lab", http_status="404"}[2m])) > 0.05
+
+FastAPIPodRestartDetected
+
+Triggers when the FastAPI container restart count increases within a 5-minute window.
+
+Example expression:
+
+increase(kube_pod_container_status_restarts_total{namespace="sre-lab", container="sre-fastapi-app"}[5m]) > 0
+
+SRE Lesson
+
+Dashboards help engineers observe system behavior, but alerts help notify when action may be needed. Alert rules should be specific enough to catch real issues without creating unnecessary noise.
+
+

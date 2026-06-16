@@ -1,0 +1,32 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: sre-fastapi-alert-rules
+  namespace: sre-lab
+  labels:
+    release: monitoring
+spec:
+  groups:
+    - name: sre-fastapi.rules
+      rules:
+        - alert: FastAPIHigh404Rate
+          expr: |
+            sum(rate(sre_lab_http_requests_total{namespace="sre-lab", http_status="404"}[2m])) > 0.05
+          for: 1m
+          labels:
+            severity: warning
+            service: sre-fastapi-app
+          annotations:
+            summary: "High 404 rate detected on FastAPI service"
+            description: "The FastAPI service is returning 404 responses above the expected threshold."
+
+        - alert: FastAPIPodRestartDetected
+          expr: |
+            increase(kube_pod_container_status_restarts_total{namespace="sre-lab", container="sre-fastapi-app"}[5m]) > 0
+          for: 30s
+          labels:
+            severity: warning
+            service: sre-fastapi-app
+          annotations:
+            summary: "FastAPI pod restart detected"
+            description: "One or more FastAPI containers restarted within the last 5 minutes."
