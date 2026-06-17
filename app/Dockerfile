@@ -10,7 +10,9 @@ COPY main.py .
 
 EXPOSE 8000
 
-ENV APP_VERSION=0.3.0
+ENV APP_VERSION=0.4.0
+ENV OTEL_SERVICE_NAME=sre-fastapi-app
+
 ENV ENVIRONMENT=container
 
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
