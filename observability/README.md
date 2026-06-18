@@ -149,3 +149,56 @@ SRE Lesson
 Dashboards help engineers observe system behavior, but alerts help notify when action may be needed. Alert rules should be specific enough to catch real issues without creating unnecessary noise.
 
 
+## OpenTelemetry Collector
+
+OpenTelemetry was added to the FastAPI application to generate vendor-neutral traces.
+
+The application is instrumented using the OpenTelemetry Python SDK and FastAPI instrumentation. Traces are exported from the FastAPI app to an OpenTelemetry Collector running in the `monitoring` namespace.
+
+### Trace Flow
+
+```text
+FastAPI request
+  -> OpenTelemetry FastAPI instrumentation
+  -> OTLP exporter
+  -> OpenTelemetry Collector service
+  -> Collector debug exporter logs
+
+Kubernetes Resources
+
+The OpenTelemetry Collector manifest is stored at:
+
+observability/otel-collector.yaml
+
+The Collector exposes OTLP endpoints:
+
+4317 = OTLP gRPC
+4318 = OTLP HTTP
+
+The FastAPI Deployment sends traces to the Collector using the in-cluster service DNS name:
+
+http://otel-collector.monitoring.svc.cluster.local:4317
+
+Verification Commands
+
+Check the Collector pod:
+
+kubectl get pods -n monitoring | grep otel
+
+Check Collector logs:
+
+kubectl logs deployment/otel-collector -n monitoring --tail=100
+
+Generate test traffic:
+
+for i in {1..10}; do
+  curl -s http://127.0.0.1:8080/version > /dev/null
+  curl -s http://127.0.0.1:8080/health > /dev/null
+done
+
+
+SRE Lesson
+
+Prometheus metrics help show what is happening, such as request volume, errors, latency, and restarts. OpenTelemetry traces help show how requests move through a service and provide richer context about request execution.
+
+Using an OpenTelemetry Collector keeps telemetry vendor-neutral and allows traces to be routed to different backends later, such as Grafana Tempo.
