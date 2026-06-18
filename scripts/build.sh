@@ -3,7 +3,7 @@
 set -euo pipefail
 
 IMAGE_NAME="sre-fastapi-app"
-IMAGE_TAG="0.4.0"
+IMAGE_TAG="0.5.0"
 
 echo "Building Docker image: ${IMAGE_NAME}:${IMAGE_TAG}"
 

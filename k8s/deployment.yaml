@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: sre-fastapi-app
-          image: sre-fastapi-app:0.4.0
+          image: sre-fastapi-app:0.5.0
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8000
@@ -25,9 +25,11 @@ spec:
             - name: ENVIRONMENT
               value: "kubernetes"
             - name: APP_VERSION
-              value: "0.4.0"
+              value: "0.5.0"
             - name: OTEL_SERVICE_NAME
               value: "sre-fastapi-app"
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "http://otel-collector.monitoring.svc.cluster.local:4317"
           readinessProbe:
             httpGet:
               path: /ready

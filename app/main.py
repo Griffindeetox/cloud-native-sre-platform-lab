@@ -9,10 +9,10 @@ from opentelemetry import trace
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
 
-
-APP_VERSION = os.getenv("APP_VERSION", "0.4.0")
+APP_VERSION = os.getenv("APP_VERSION", "0.5.0")
 ENVIRONMENT = os.getenv("ENVIRONMENT", "local")
 SERVICE_NAME = os.getenv("OTEL_SERVICE_NAME", "sre-fastapi-app")
 
@@ -26,7 +26,16 @@ resource = Resource.create(
 )
 
 trace_provider = TracerProvider(resource=resource)
-trace_provider.add_span_processor(BatchSpanProcessor(ConsoleSpanExporter()))
+OTEL_EXPORTER_OTLP_ENDPOINT = os.getenv(
+    "OTEL_EXPORTER_OTLP_ENDPOINT",
+    "http://localhost:4317",
+)
+
+trace_provider.add_span_processor(
+    BatchSpanProcessor(
+        OTLPSpanExporter(endpoint=OTEL_EXPORTER_OTLP_ENDPOINT, insecure=True)
+    )
+)
 trace.set_tracer_provider(trace_provider)
 
 tracer = trace.get_tracer(__name__)
@@ -81,7 +90,7 @@ async def metrics_middleware(request: Request, call_next):
 def root():
     with tracer.start_as_current_span("root-handler"):
         return {
-            "message": "Cloud-Native SRE Platform Lab v0.4.0 is running",
+            "message": "Cloud-Native SRE Platform Lab v0.5.0 is running",
             "environment": ENVIRONMENT,
             "version": APP_VERSION,
         }
