@@ -1,0 +1,74 @@
+name: SRE Lab CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-and-build:
+    name: Validate app and build image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: "pip"
+          cache-dependency-path: app/requirements.txt
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r app/requirements.txt
+
+      - name: Validate FastAPI app imports
+        run: |
+          python -c "from app.main import app; print(app.title)"
+
+      - name: Check project structure
+        run: |
+          test -f app/main.py
+          test -f app/Dockerfile
+          test -f k8s/deployment.yaml
+          test -f k8s/service.yaml
+          test -f k8s/namespace.yaml
+          test -f k8s/servicemonitor.yaml
+          test -f k8s/prometheus-rules.yaml
+          test -f observability/otel-collector.yaml
+
+      - name: Basic Kubernetes YAML syntax check
+        run: |
+          python - <<'PY'
+          import glob
+          import sys
+          import yaml
+
+          files = glob.glob("k8s/*.yaml") + glob.glob("observability/*.yaml")
+          failed = False
+
+          for path in files:
+              try:
+                  with open(path, "r", encoding="utf-8") as f:
+                      docs = list(yaml.safe_load_all(f))
+                  valid_docs = [doc for doc in docs if doc]
+                  print(f"OK: {path} ({len(valid_docs)} document(s))")
+              except Exception as exc:
+                  failed = True
+                  print(f"FAILED: {path}: {exc}", file=sys.stderr)
+
+          if failed:
+              sys.exit(1)
+          PY
+
+      - name: Build Docker image
+        run: |
+          docker build -t sre-fastapi-app:ci ./app
